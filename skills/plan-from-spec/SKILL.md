@@ -61,7 +61,10 @@ Scan the spec against the universal checklist, plus the lens(es) matching the do
 
 ### 3. Ask — relentlessly, but in batches
 - Use the **AskUserQuestion** tool. Group related unknowns; ask the highest-impact ones first.
-- Offer concrete options with a recommended default (marked "(Recommended)") so the user can decide fast, but never decide for them on a choice that changes the design.
+- **Offer as many concrete options as the decision genuinely has** — don't collapse a real choice into two. Use the full option budget (up to 4 per question) whenever there are that many distinct, sensible paths, and put the recommended one first marked "(Recommended)". The user can always pick "Other", so err toward surfacing more real alternatives rather than fewer.
+  - For each option give a one-line description of its trade-off so the choice is informed, not blind.
+  - When options are concrete artifacts the user should compare visually (UI layouts, schema shapes, API signatures, config snippets), use the option **`preview`** field to show the mockup/snippet side by side.
+  - When the choices are not mutually exclusive (e.g. "which of these to include"), set **`multiSelect: true`** instead of forcing one.
 - Keep looping: after answers, re-scan for new unknowns the answers introduce. Continue until the open-questions list is empty.
 - Only stop asking when you can honestly state that no relevant checklist/lens item is unresolved.
 
@@ -111,9 +114,35 @@ Per interface: shape of inputs/outputs, errors, status/return codes, events.
 State machine(s), transitions, validations, edge cases, idempotency.
 
 ## 7. Implementation tasks
-Ordered, small, independently shippable. For each: files/resources to add/change and why.
-- [ ] Task 1 — ...
-- [ ] Task 2 — ...
+Ordered, small, independently shippable. For each task list **every file/resource to add or change**, and for each show the **concrete code to write** — not just a description of intent. A reader should be able to apply the plan without inventing anything.
+
+For each task, use this shape:
+
+### Task N — <short title>
+- **Why:** one line.
+- **Files & changes:** for every affected file, give the exact change:
+  - **New file** → the full intended contents (or the complete function/class/component), in a fenced code block in the repo's real language and style.
+  - **Edited file** → a diff-style or before/after block showing the exact lines added/removed and where they go (function, line anchor, import block, config key). Don't say "add validation" — write the validation.
+  - **Deleted/moved** → name the path and what replaces it.
+- **Depends on:** earlier task numbers, if any.
+
+```text
+### Task 1 — <title>
+- Why: ...
+- Files & changes:
+  - `path/to/new_file.ext` (new):
+    ```<lang>
+    <full file or unit contents>
+    ```
+  - `path/to/existing.ext` (edit, in `someFunction`):
+    ```diff
+    - old line
+    + new line
+    ```
+- Depends on: —
+```
+
+Keep snippets faithful to the repo's actual conventions, imports, naming, and error handling found in Step 1 — copy real surrounding patterns rather than generic boilerplate.
 
 ## 8. Testing
 Both levels, explicit:
@@ -134,6 +163,8 @@ you didn't ask enough.
 - **No implementation in this skill.** You produce a plan only. Building it is a separate step.
 - **Fit the real project.** Reference actual files, conventions, tooling, and architecture found in the repo and `CLAUDE.md`,  `AGENTS.md` — whatever the stack. Don't impose patterns the repo doesn't use.
 - **Tasks must be ordered and small** — each a sensible unit of work, dependencies first.
+- **Every task must carry concrete code, not just description.** New files show their full contents (or the complete unit); edited files show exact diffs / before-after at a named anchor. If a task genuinely can't be specified to code level yet (e.g. blocked on an external answer), say so explicitly in Risks & open items instead of hand-waving it in the task.
+- **Surface real choices.** When a decision has more than two sensible paths, present them all (up to 4) in the AskUserQuestion options rather than narrowing prematurely; use `preview` for artifact comparisons and `multiSelect` for non-exclusive picks.
 - **The "Resolved decisions" table is mandatory** — it's the proof nothing was left to chance.
 - **Tests are mandatory.** Every plan must include both unit tests and integration tests (or justify in Risks & open items why a level doesn't apply), and the implementation tasks must contain explicit task(s) for writing them.
 - If the user explicitly says "just assume sensible defaults", you may, but still record each assumption in the Resolved decisions table marked `(assumed)`.
