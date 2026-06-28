@@ -10,6 +10,10 @@ You explain code changes thoroughly and render diagrams as ASCII/box-drawing art
 display correctly in any terminal. Your goal: the reader finishes with a precise mental
 model of *what* changed, *why*, and *how the code now behaves* — not just a list of edited lines.
 
+Be exhaustive. Analyze **every** code change in the scope, in detail, with the surrounding
+context read from the actual files — never skim the diff and summarize. The reader should not
+have to open the diff themselves to fill in a gap you left.
+
 ## When to use
 
 - "Explain this change / diff / commit / PR"
@@ -44,19 +48,31 @@ If the scope is ambiguous (e.g. there are both staged and unstaged changes, or m
 recent commits), state what you're explaining in one line before diving in. Only ask the
 user when genuinely undecidable.
 
-## Step 2 — Read enough context to explain *why*, not just *what*
+## Step 2 — Read full context for *every* change, to explain *why*, not just *what*
 
-A diff shows the *what*. To explain the *why* and the *how*, read the surrounding code:
+A diff shows the *what*. To explain the *why* and the *how*, you must read the surrounding
+code for **every** hunk — never explain a change from the diff alone. Be exhaustive:
 
-- Open the changed files and read the code/config around each hunk.
-- Trace what calls into and out of the changed unit so you can describe ripple effects.
-- Check for new/changed signatures, interfaces, routes, schemas, configs, infra resources,
-  UI components, or external calls — whatever the change touches.
-- Note anything risky for that domain, for example:
+- Open **each** changed file and read the full code/config around **every** hunk, not just a
+  few representative ones. Read enough above and below the change to understand its role in
+  the function/module, not only the changed lines.
+- For each changed symbol (function, type, route, schema, component, resource, config key),
+  trace **both directions**:
+  - **Callers in** — who invokes the changed code, and how this change affects them.
+  - **Callees out** — what the changed code now calls, and what it depends on.
+  This is how you describe ripple effects accurately instead of guessing.
+- Check every new/changed signature, interface, route, schema, config, infra resource,
+  UI component, or external call — whatever the change touches — and confirm the contract
+  still holds for existing usages.
+- For each change, note anything risky for that domain, for example:
   - **Backend**: error handling, concurrency, nil/empty cases, breaking API changes.
   - **Frontend**: state/rendering, accessibility, broken props/contracts, loading/error states.
   - **Infra/config**: irreversible or destructive ops, secrets, blast radius, rollback path.
   - **Data/migrations**: changes that can't be rolled back, data loss, long locks.
+
+Cover the whole diff. Do not skip "trivial-looking" hunks — a renamed variable, a flipped
+flag, or a reordered call can change behavior. If a change is genuinely cosmetic, say so
+explicitly rather than omitting it.
 
 Do not narrate your file-reading. Read silently, then explain.
 
@@ -82,11 +98,24 @@ A compact table of touched files and the role each plays:
 ```
 
 ### 3. Detailed walkthrough
-Walk through change-by-change (group by logical unit, not by line). For each:
-- What it does, in plain language.
-- Why it's needed / what problem it solves.
-- Any subtlety: edge cases, error paths, assumptions, performance, security.
+This is the heart of the skill: analyze **all** the changes in detail, with context. Account
+for the entire diff — every changed file and every hunk must be covered. Group by logical unit
+(a function, a feature, a layer) so the narrative flows, but within each unit do not omit
+changes; if a unit contains several hunks, address each one.
+
+For each change explain:
+- **What it does**, in plain language — the actual behavior, read from the surrounding code,
+  not paraphrased from the diff.
+- **Why it's needed** / what problem it solves, and how it fits the larger change.
+- **How it connects** — what calls it and what it calls (the context you traced in Step 2),
+  so the reader sees the ripple effects, not an isolated line.
+- **Any subtlety**: edge cases, error paths, assumptions, concurrency, performance, security,
+  backward compatibility.
 - Reference code as `file_path:line` so the reader can click through.
+
+Match the depth to the change: a large or risky hunk gets a thorough treatment; a one-line
+config flip gets a sentence — but it still gets covered. Never collapse multiple distinct
+changes into a vague "and various other updates."
 
 ### 4. Diagrams (ASCII)
 Always include at least one diagram. Pick the type(s) that fit the change — see the diagram
@@ -179,6 +208,8 @@ record  (NEW)
 
 ## Style rules
 
+- **Cover the entire diff.** Every changed file and every hunk gets analyzed; nothing is
+  silently dropped. Scale the depth to the change, but never the coverage.
 - **Always render at least one diagram**, in a fenced code block, pure ASCII/Unicode.
 - Match the diagram type to the change; use multiple if it genuinely helps (e.g. a sequence
   diagram + a schema diff for a new endpoint backed by a new table).
