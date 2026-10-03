@@ -28,6 +28,10 @@ everything — before reading the source, before `ls`, before proposing options.
 | Other partial input (e.g. "port the backend to Rust" with no target dir) | **Stop.** Ask only for the missing values; do not infer the rest. |
 
 The three inputs are **source directory**, **target directory**, **target language/stack**.
+Ask for them as plain sentences, not field labels — e.g. "Where does the current code
+live, where should the translated version go, and what language or framework should it be
+written in?" The labels above are for you to track internally; the owner should never have
+to parse them.
 
 Stopping means: ask, then end the turn. Not "ask and start analyzing while waiting." A
 repo survey run before the source directory is confirmed analyzes the wrong tree, and its
